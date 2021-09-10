@@ -17,20 +17,17 @@ Input or intermediate data for various analyses for the six study species. We us
 `./data/popmap/`: popmap filter (after filtering) for each species.
 
 `./data/outlier_neutral/`: #chrom (tag) and #pos (tag.pos)
-  - \*fstol.list: *F<sub>ST</sub>* outliers
-  - \*geaol.list: GEA outliers
-  - \*fst_gea_ol.list: outlier SNPs (union of *F<sub>ST</sub>* outliers and GEA outliers)
-  - \*neutral.list: neutral SNPs
-  - \*outlier_summary.txt: identified outliers using each of the 7 methods. Note: bs: Bayescan; arl: Arlequin; ofk: OutFLANK; bf: Bayenv2.  
+  - `\*fstol.list`: *F<sub>ST</sub>* outliers
+  - `\*geaol.list`: GEA outliers
+  - `\*fst_gea_ol.list`: outlier SNPs (union of *F<sub>ST</sub>* outliers and GEA outliers)
+  - `\*neutral.list`: neutral SNPs
+  - `\*outlier_summary.txt`: identified outliers using each of the 7 methods. Note: bs: Bayescan; arl: Arlequin; ofk: OutFLANK; bf: Bayenv2.  
 
-`./data/alignment/`: list of aligned SNPs for each species.
+`./data/alignment/`: list of aligned SNPs (after filtering) for each species.
 
 **Note**:
 
 vcf files (after filtering) for each species along with corresponding genepop files were deposited in Dyrad.
-
-
-
 
 # Scripts
 
