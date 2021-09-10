@@ -1,0 +1,39 @@
+library(tidyverse)
+
+rm(list=ls())
+
+trio.geno <- read.table("./trio.geno.txt", check.names = F, header=T)
+trio.geno[1:5,1:5]
+
+###Make Polygene input
+##Polygene input format:
+#(tab-delimited)
+#ID Pop Ploidy Loc1 Loc2
+#Ind1  pop1  4  2,3,4  1,2,4
+#Ind2  pop1  4  4      2,3,4
+#Ind3  pop2  4  1,4    1,2,3,4
+
+#convert ACGT to 1234
+#A > 1
+#C > 2
+#G > 3
+#T > 4
+#0000 > blank
+
+trio.geno.num <- trio.geno %>% 
+  mutate_all(funs(str_replace_all(., "A", "1,"))) %>% 
+  mutate_all(funs(str_replace_all(., "C", "2,"))) %>% 
+  mutate_all(funs(str_replace_all(., "G", "3,"))) %>% 
+  mutate_all(funs(str_replace_all(., "T", "4,"))) %>% 
+  mutate_all(funs(str_replace_all(., ",$", ""))) %>% #remove tailing comma; 
+  mutate_all(funs(str_replace_all(., "0000", ""))) # replace missing data 0000 with blank
+  
+trio.geno.num[1:5,1:5]
+
+trio.geno.num <- trio.geno.num %>% 
+  rownames_to_column("ID") %>% 
+  mutate(Pop="pop", Ploidy=4) %>% 
+  select(ID, Pop, Ploidy, everything())
+trio.geno.num[1:5,1:5]
+
+write.table(trio.geno.num, "polygene_trio_geno_input.txt", quote=F, row.names = F, sep="\t")
