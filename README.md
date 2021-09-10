@@ -5,7 +5,7 @@ Yue Shi, Kristen L. Bouska, Garrett J. McKinney, William Dokai, Andrew Bartels, 
 
 # Data
 
-These data are in the '/data/' directory, which includes necessary input data for various analyses for the six study species. We use the following code for species names.
+These data are in the `/data/` directory, which includes necessary input data for various analyses for the six study species. We use the following code for species names.
   - **bhmw** -> Bullhead Minnow
   - **blgl** -> Bluegill
   - **fwdm** -> Freshwater Drum
@@ -13,13 +13,13 @@ These data are in the '/data/' directory, which includes necessary input data fo
   - **gzsd** -> Gizzard Shad
   - **ersn** -> Emerald Shiner
 
-'./data/popmap/': popmap filter (after filtering) for each species.
+`./data/popmap/`: popmap filter (after filtering) for each species.
 
-'./data/outlier_neutral/': list of outlier SNPs and neutral SNPs for each species, along with identified outliers with each method. 
+`./data/outlier_neutral/`: list of outlier SNPs and neutral SNPs for each species, along with identified outliers with each method. 
 
-'./data/alignment/': list of aligned SNPs for each species.
+`./data/alignment/`: list of aligned SNPs for each species.
 
-./data/inversions/': list of SNPs within each identified putative inversions.
+`./data/inversions/`: list of SNPs within each identified putative inversions.
 
 
 The following data were deposited in Dyrad.
