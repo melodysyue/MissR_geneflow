@@ -5,7 +5,7 @@ Yue Shi, Kristen L. Bouska, Garrett J. McKinney, William Dokai, Andrew Bartels, 
 
 # Data
 
-Input or intermediate data for various analyses for the six study species. We use the following code for species names.
+Input and intermediate data for various analyses for the six study species. We use the following code for species names.
 
   - **bhmw** -> Bullhead Minnow
   - **blgl** -> Bluegill
@@ -16,12 +16,12 @@ Input or intermediate data for various analyses for the six study species. We us
 
 `./data/popmap/`: popmap filter (after filtering) for each species.
 
-`./data/outlier_neutral/`: #chrom (tag) and #pos (tag.pos)
+`./data/outlier_neutral/`: lists of outlier SNPs and neutral SNPs with tag ($chrom) and tag position ($pos).
   - `*fstol.list`: *F<sub>ST</sub>* outliers
   - `*geaol.list`: GEA outliers
   - `*fst_gea_ol.list`: outlier SNPs (union of *F<sub>ST</sub>* outliers and GEA outliers)
   - `*neutral.list`: neutral SNPs
-  - `*outlier_summary.txt`: identified outliers using each of the 7 methods. Note: bs: Bayescan; arl: Arlequin; ofk: OutFLANK; bf: Bayenv2.  
+  - `*outlier_summary.txt`: identified outliers using each of the 7 methods, including Bayescan (bs), Arlequin (arl), OutFLANK (ofk), pcadapt, RDA(rda), LFMM2(lfmm), and Bayenv2 (bf).  
 
 `./data/alignment/`: list of aligned SNPs (after filtering) for each species.
 
