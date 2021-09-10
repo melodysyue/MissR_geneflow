@@ -5,7 +5,8 @@ Yue Shi, Kristen L. Bouska, Garrett J. McKinney, William Dokai, Andrew Bartels, 
 
 # Data
 
-These data are in the `/data/` directory, which includes necessary input data for various analyses for the six study species. We use the following code for species names.
+Input or intermediate data for various analyses for the six study species. We use the following code for species names.
+
   - **bhmw** -> Bullhead Minnow
   - **blgl** -> Bluegill
   - **fwdm** -> Freshwater Drum
@@ -15,21 +16,25 @@ These data are in the `/data/` directory, which includes necessary input data fo
 
 `./data/popmap/`: popmap filter (after filtering) for each species.
 
-`./data/outlier_neutral/`: list of outlier SNPs and neutral SNPs for each species, along with identified outliers with each method. 
+`./data/outlier_neutral/`: #chrom (tag) and #pos (tag.pos)
+  - \*fstol.list: *F<sub>ST</sub>* outliers
+  - \*geaol.list: GEA outliers
+  - \*fst_gea_ol.list: outlier SNPs (union of *F<sub>ST</sub>* outliers and GEA outliers)
+  - \*neutral.list: neutral SNPs
+  - \*outlier_summary.txt: identified outliers using each of the 7 methods. Note: bs: Bayescan; arl: Arlequin; ofk: OutFLANK; bf: Bayenv2.  
 
 `./data/alignment/`: list of aligned SNPs for each species.
 
-`./data/inversions/`: list of SNPs within each identified putative inversions.
+**Note**:
+
+vcf files (after filtering) for each species along with corresponding genepop files were deposited in Dyrad.
 
 
-The following data were deposited in Dyrad.
-
-vcf files (after filtering) for each species along with corresponding genepop files.
 
 
 # Scripts
 
-**./0_read_processing/**:
+`./scripts/0_read_processing/`:
  - 00_process_radtags.slurm
  - 01_clone_filter.slurm
  - 02_ustacks.slurm
@@ -37,7 +42,7 @@ vcf files (after filtering) for each species along with corresponding genepop fi
  - 04_sstacks.slurm
  - 05_stacks_TGP.slurm
  
-**./1_snp_filtering/**:
+`./scripts/1_snp_filtering/`:
  - 11_hdplot.r
  - 12_vcf_keep_highest_MAF.py
  - 13_countHetsMissing_genepop_sample-ncode3.pl
