@@ -27,11 +27,15 @@ Input and intermediate data for various analyses for the six study species. We u
 
 **Note**:
 
-vcf files (after filtering) for each species along with corresponding genepop files were deposited in Dyrad.
+Demultiplexed RAD sequencing data used in this study were archived in the NCBI with BioProject ID PRJNA674918
+
+vcf files (after filtering) for each species along with corresponding genepop files were archived in Dyrad.
 
 # Scripts
 
-`./scripts/0_read_processing/`:
+All analyses were performed in parallel within each species and the results were compared among species. The following scripts were demonstrated using one species as an example. 
+
+`./scripts/0_read_processing/`: The following slurm scripts are for reference only. Please adjust accordingly for your computing environment and working directory. 
  - 00_process_radtags.slurm
  - 01_clone_filter.slurm
  - 02_ustacks.slurm
@@ -40,9 +44,9 @@ vcf files (after filtering) for each species along with corresponding genepop fi
  - 05_stacks_TGP.slurm
  
 `./scripts/1_snp_filtering/`:
- - 11_hdplot.r
- - 12_vcf_keep_highest_MAF.py
- - 13_countHetsMissing_genepop_sample-ncode3.pl
+ - 10_hdplot.r
+ - 11_vcf_keep_highest_MAF.py
+ - 12_countHetsMissing_genepop_sample-ncode3.pl
  
 
 
