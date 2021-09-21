@@ -17,16 +17,16 @@ Input and intermediate data for various analyses for the six study species. We u
 `./data/popmap/`: popmap filter (after filtering) for each species.
 
 `./data/env/`: 
-  - `*missR_env_bypop_reduced.csv*`: standardized environmental data (subtract the mean and then devided by the standard deviation of the variable across populations via R `scale()` function, `center=TRUE, scale=TRUE`)
+  - `*missR_env_bypop_reduced.csv*`: standardized environmental data (subtract the mean and then devided by the standard deviation of the variable across populations via R `scale()` function, `center=TRUE, scale=TRUE`).
   
 `./data/rowID_tag_tagpos/`: list of genotyped SNPs with row index, tag, and tag position. 
 
 `./data/outlier_neutral/`: lists of outlier SNPs and neutral SNPs with tag ($chrom) and tag position ($pos).
-  - `*fstol.list`: *F<sub>ST</sub>* outliers
-  - `*geaol.list`: GEA outliers
-  - `*fst_gea_ol.list`: outlier SNPs (union of *F<sub>ST</sub>* outliers and GEA outliers)
-  - `*neutral.list`: neutral SNPs (before thinning)
-  - `*neutral_thin.list`: neutral SNPs (after thinning)
+  - `*fstol.list`: *F<sub>ST</sub>* outliers.
+  - `*geaol.list`: GEA outliers.
+  - `*fst_gea_ol.list`: outlier SNPs (union of *F<sub>ST</sub>* outliers and GEA outliers).
+  - `*neutral.list`: neutral SNPs (before thinning).
+  - `*neutral_thin.list`: neutral SNPs (after thinning).
   - `*outlier_summary.txt`: identified outliers using each of the 7 methods, including Bayescan (bs), Arlequin (arl), OutFLANK (ofk), pcadapt, RDA(rda), LFMM2(lfmm), and Bayenv2 (bf).  
 
 `./data/alignment/`: 
@@ -47,7 +47,7 @@ Input and intermediate data for various analyses for the six study species. We u
 
  
 `./data/dxy/`:
- - `*.dxy.txt`: per-SNP dxy value; 
+ - `*.dxy.txt`: per-SNP dxy value. 
 
 `./data/ld/`:
  - `*.ld`: R2 value for pairs of SNPs (maf>0.01) on each of the 5 chromosomes with over-clustered outlier SNPs. 
