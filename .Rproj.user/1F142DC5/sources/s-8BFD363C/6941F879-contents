@@ -1,0 +1,122 @@
+library(tidyverse)
+library(ggsignif) #geom_signif
+library(ggpubr) #ggarrange
+
+rm(list=ls())
+
+
+ild<- read.table("./HMM/HMM_final/fwdm.aln.hmm.islands.stats.txt",header=T)
+dxy <- read.table("./dxy/fwdm.dxy.txt",header=T)
+wl <- read.table("./HMM/HMM_final/fwdm.aln.hmm.island.loci.stats.list",header=T)
+ild.stat <- left_join(ild, dxy, by="locus")
+
+ild.stat <- ild.stat %>% 
+  select(pos.index,locus,id,tag,tag.pos,chr,chr.pos, chr.mbp, 
+         x, env, fst.ol, sig.state, 
+         win, win.size, win.start, win.end, 
+         Ho, Hs, Fstp, dxy_avg)
+
+#filter datasets to have  more than 1 island SNPs on chromosomes.
+
+ild.stat <- ild.stat %>% 
+  mutate(island=win %in% unique(wl$win)) %>% 
+  mutate(win.status=case_when(
+    island=="TRUE" & win.size > 1  ~ 'Island',
+    island=="TRUE" & win.size ==1  ~ 'Island with single SNP',
+    TRUE ~ 'Non-island')) 
+
+ild.stat$win.status <- as.factor(ild.stat$win.status)
+levels(ild.stat$win.status)
+table(ild.stat$win.status)
+
+
+#Only include chromosomes with more than 1 SNPs
+chr.target <- wl %>% 
+  group_by(chr) %>% 
+  mutate(n.win.chr=n()) %>% 
+  filter(n.win.chr>1 & chr!="Unplaced") %>% 
+  pull(chr)
+
+ild.snp <- wl %>% 
+  group_by(chr) %>% 
+  mutate(n.win.chr=n()) %>% 
+  filter(n.win.chr>1 & chr!="Unplaced") %>% 
+  pull(id)
+
+ild.ol <- wl %>% 
+  group_by(chr) %>% 
+  mutate(n.win.chr=n()) %>% 
+  filter(n.win.chr>1 & chr!="Unplaced") %>% 
+  filter(sig.state=="high") %>% 
+  pull(id)
+
+
+ild.stat.filtered <- ild.stat %>% 
+  filter(chr %in% chr.target) %>% 
+  mutate(snp.status=case_when(
+    id %in% ild.ol  ~ "Island-Outliers",
+    id %in% ild.snp & !id %in%ild.ol  ~ "Island", 
+    TRUE ~ "Background"
+  ))
+table(ild.stat.filtered$snp.status)
+
+
+
+
+p_ho <- ild.stat.filtered %>% 
+  ggplot(aes(x=snp.status,y=Ho, fill=snp.status))+
+  theme_classic(base_size=15)+
+  geom_boxplot(alpha=0.5)+
+  ylab("Observed Heterozygosity")+
+  geom_signif(comparisons=list(c("Background","Island"), c("Background","Island-Outliers"), c("Island","Island-Outliers")),
+              map_signif_level=TRUE)+
+  scale_fill_manual(values=c("dimgray", "navyblue","red"))+
+  theme(axis.title.x  = element_blank(),
+        axis.text.x = element_text(size=15),
+        legend.position = "none",
+        panel.border = element_rect(colour="black",fill=NA, size=1))
+p_ho
+
+p_fstp <- ild.stat.filtered %>% 
+  ggplot(aes(x=snp.status,y=Fstp, fill=snp.status))+
+  theme_classic(base_size=15)+
+  geom_boxplot(alpha=0.5)+
+  ylab("Fst")+
+  geom_signif(comparisons=list(c("Background","Island"), c("Background","Island-Outliers"), c("Island","Island-Outliers")),
+              map_signif_level=TRUE)+
+  scale_fill_manual(values=c("dimgray", "navyblue","red"))+
+  theme(axis.title.x  = element_blank(),
+        axis.text.x = element_text(size=15),
+        legend.position = "none",
+        panel.border = element_rect(colour="black",fill=NA, size=1))
+  
+p_fstp  
+
+p_dxy <- ild.stat.filtered %>% 
+  ggplot(aes(x=snp.status,y=dxy_avg, fill=snp.status))+
+  theme_classic(base_size=15)+
+  geom_boxplot(alpha=0.5)+
+  ylab("Dxy")+
+  geom_signif(comparisons=list(c("Background","Island"), c("Background","Island-Outliers"), c("Island","Island-Outliers")),
+              map_signif_level=TRUE)+
+  scale_fill_manual(values=c("dimgray", "navyblue","red"))+
+  theme(axis.title.x  = element_blank(),
+        axis.text.x = element_text(size=15),
+        legend.position = "none",
+        panel.border = element_rect(colour="black",fill=NA, size=1))
+p_dxy
+
+pdf("./HMM/HMM_final/fwdm.island.ho.fst.dxy.pdf", width = 12, height = 8)
+ggarrange(p_ho, p_fstp, p_dxy, ncol=3)
+dev.off()
+
+##note: for fwdm, a window split between chr 13 and 14, with 1 SNP on each chr.
+
+ild.stat.filtered %>% 
+  group_by(snp.status) %>% 
+  summarise(mean_Ho=mean(Ho), mean_Fst=mean(Fstp), mean_Dxy=mean(dxy_avg))
+
+
+table(ild.stat.filtered$win.status, ild.stat.filtered$chr)
+table(ild.stat.filtered$snp.status, ild.stat.filtered$chr)
+

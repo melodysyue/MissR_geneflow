@@ -1,0 +1,123 @@
+library(tidyverse)
+library(purrr)
+
+rm(list=ls())
+#data for HMM state of high differentiation
+#usually 1 for low, 2 for intermediate, 3 for high, but the order might change
+state <- read.table("./hmm_highstate_chr_iliamna.txt",header=T)
+all <- read.table("./HMM_iliamna/iliamna.noNa.fst",header=TRUE)
+chr <- state$chr
+ol <- quantile(all$FST, 0.999) #cutoff for outliers, top 0.1%. 
+
+
+#loci state info
+list <- list.files(path="./HMM_iliamna/HMM_files", pattern="*_fst_iliamna_3state_HMMstates.txt", full.names = TRUE) %>% 
+  lapply(read.table,header=TRUE)
+
+n <- length(list)
+
+
+for (i in 1:n){
+  loc <- all[which(all$CHR==chr[i]),]
+  loc <- cbind(loc,list[[i]])
+  loc$island <- cumsum(c(1,as.numeric(diff(loc$x))!=0))
+  
+  loc <- loc %>% 
+    group_by(island) %>% 
+    mutate(ild.size=n()) %>% 
+    mutate(ild.start=first(POS)) %>% 
+    mutate(ild.end=last(POS))
+  
+  high_state <- state[which(state$chr==chr[i]),]
+  
+  loc <- left_join(loc,high_state,by=c("CHR" = "chr")) %>% 
+    mutate(status=case_when(
+      x==high_state ~ "high",
+      TRUE ~ "non_high"
+    ))
+  
+  print(chr[i])
+  write.table(loc, paste0("./HMM_iliamna/HMM_files/", chr[i],"_HMM_output.txt"), quote=F, row.names = F)  
+
+}
+
+###combine them together
+
+output.list <- list.files(path="./HMM_iliamna/HMM_files", pattern="*_HMM_output.txt", full.names = TRUE)
+output.list
+output <- output.list %>%
+  map_df(read.table, header=TRUE)
+
+output <- output %>% 
+  mutate(ild.size.kp = (ild.end - ild.start)/1000)
+
+
+
+# compare fst within islands vs non islands;Make sure the state assignment is correct
+fst_compare <- output %>% 
+  group_by(CHR, status) %>% 
+  summarise(mean_fst=mean(FST)) %>% 
+  spread(status, mean_fst)
+
+# summary
+output %>% 
+  group_by(CHR) %>% 
+  summarise(n_ild=n_distinct(island)) %>% 
+  mutate(tot=sum(n_ild)) 
+
+
+# output islands and only keep islands if it contains at least one outlier Fst locus (top 0.1%)
+output <- output %>% 
+  mutate(fst.ol=FST>ol) %>% 
+  mutate(sig.state=ifelse(status=="high" & fst.ol == "TRUE","high", "non-high"))
+
+ild <- output %>% 
+  filter(sig.state=="high") %>% 
+  select(CHR, SNP, island)
+
+output.ild <- left_join(ild, output) %>% 
+  unique()
+
+#summary stats
+#how many islands per chr
+#how many islands in total
+output.ild %>% 
+  group_by(CHR) %>% 
+  summarise(n_ild=n_distinct(island)) %>% 
+  mutate(tot=sum(n_ild)) 
+
+# how many Fst outliers per island
+output.ild %>% 
+  group_by(CHR, island) %>% 
+  summarise(n_ol=sum(sig.state=="high")) 
+
+
+# only keep islands if there are at least 10 Fst outliers
+target <- output.ild %>% 
+  group_by(CHR, island) %>% 
+  summarise(n_ol=sum(sig.state=="high")) %>% 
+  filter(n_ol>9) %>% 
+  select(CHR, island)
+
+output.ild.ol <- left_join(target, output.ild) %>% 
+  unique()
+
+#double check the number of outliers per island
+output.ild.ol %>% 
+  group_by(CHR, island) %>% 
+  summarise(n_ol=sum(sig.state=="high"))
+
+output.ild.ol %>% 
+  group_by(CHR) %>% 
+  summarise(n_ild=n_distinct(island)) %>% 
+  mutate(tot=sum(n_ild)) 
+
+
+output.ild.ol.list <- output.ild.ol %>% 
+  select(CHR, POS, island, ild.start, ild.end) %>% 
+  arrange(CHR, POS, island)
+
+
+write.table(output.ild, "./HMM_iliamna/HMM_output_ild_one_iliamna.txt", quote=F, row.names = F)
+write.table(output.ild.ol.list, "./HMM_iliamna/HMM_output_ild_ten_iliamna.list", quote=F, row.names = F)
+

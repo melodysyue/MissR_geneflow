@@ -1,0 +1,186 @@
+library(tidyverse)
+library(ggrepel)
+
+rm(list=ls())
+
+###############
+##load input###
+###############
+aln <- read.table("./alignment/ersn.bwa.danRer11.uni.mapq20.aln.txt",header=T)
+
+envol <- read.table("./outliers_summary/ersn.envol.candidates.list", header=T)
+fstol <- read.table("./outliers_summary/ersn.fstol.candidates.list", header=T)
+neu <- read.table("./outliers_summary/ersn.neutral.list", header=T)
+stat <- read.csv("./outliers_summary/ersn.loc.outlier.summary.csv",header=T)
+
+rda <- read.table("./rda_prda_output/ersn.rda.ind.snp.txt",header=T)
+rda <- rda %>% 
+  rownames_to_column(var="locus")
+
+dd <- aln %>% 
+  mutate(env=snp %in% envol$chrom) %>% 
+  mutate(fst = snp %in% fstol$chrom) %>% 
+  mutate(neu = snp %in% neu$chrom)
+
+head(dd)
+head(stat)
+dd <- left_join(dd, stat, by=c("snp"="chrom")) 
+head(dd)
+head(rda)
+dd <- left_join(dd, rda, by="locus")
+head(dd)
+dd <- dd %>%   
+  dplyr::select(locus, tag=snp, tag.pos=pos.y, reference, chr, pos=pos.x, everything(.))
+
+dd <- dd %>% 
+  mutate(id=paste0(tag,"_", tag.pos))
+head(dd)
+
+############################################
+###get cumulative positions along genomes###
+############################################
+#create a column with cumulative base pair position in a way that puts the SNPs on the first chromosome first, 
+#and the SNPs on chromosome 24 last
+###order chromosome and make positions are in mbp###
+nCHR <- length(unique(dd$chr))
+nCHR
+
+dd$chr=as.factor(dd$chr)
+is.factor(dd$chr)
+levels(dd$chr)
+dd$CHR=dd$chr
+
+
+dd$chr <- factor(dd$chr, levels=c(seq(1,nCHR-1,1),"unplaced"))
+levels(dd$chr)=c(seq(1,nCHR-1,1),"Unplaced")
+levels(dd$chr)
+
+table(dd$chr, dd$CHR)
+
+
+dd$BPcum <- NA #cumulative position
+s <- 0
+nbp <- c()
+
+for (i in levels(unique(dd$chr))){
+  nbp[i] <- max(dd[dd$chr == i,]$pos)
+  dd[dd$chr == i,"BPcum"] <- dd[dd$chr == i,"pos"] + s
+  s <- s + nbp[i]
+}
+
+dd$mbp.cum <- dd$BPcum/1e6
+summary(dd)
+
+#######################
+##labeling parameters##
+#######################
+#calculate the difference between the maximum and minimum cumulative base pair 
+#position for each chromosome and divide it by two to get the middle of each chromosome.
+
+axis.set <- dd %>% 
+  group_by(chr) %>% 
+  summarize(center = (max(mbp.cum) + min(mbp.cum)) / 2)
+
+axis.set
+
+range(dd$Fstp)
+
+#ylim=max(dd$Fstp)+0.1
+ylim=max(dd$RDA1^2)+0.01
+##replace nagative Fst value to a very small value close to 0 for plotting reasons
+dd <- dd %>% 
+  mutate(Fst_plot=if_else(Fstp<0, 0.001, Fstp))
+  
+summary(dd)
+range(dd$Fst_plot)
+####################
+###manhattan plot###
+####################
+#plot it
+#each point is one snp;
+#snp color based on chromosome;
+#add labels and y limit
+#keep horizontal grid lines, remove vertical grid lines;
+head(dd)
+manhplot <- ggplot(dd, aes(x = mbp.cum, y = RDA1^2, 
+                                 color = chr, size=RDA1^2)) +
+  geom_point(alpha = 0.75) +
+  #geom_hline(yintercept = -log10(sig), color = "grey40", linetype = "dashed") + #add reference line
+  scale_x_continuous(label = axis.set$chr, breaks = axis.set$center) +
+  scale_y_continuous(expand = c(0,0), limits=c(0, ylim)) +
+  #scale_y_continuous(expand = c(0,0)) +
+  #scale_color_manual(values = rep(c("#276FBF", "#183059"), nCHR)) +
+  scale_color_manual(values = rep(c("orange","darkgrey"), nCHR)) +
+  scale_size_continuous(range = c(1,3)) +
+  #labs(x = NULL, 
+  #     y = "Fst") + 
+  labs(x = NULL, 
+       y = "Squared RDA1 loading") + 
+  theme_minimal(base_size = 15) +
+  theme( 
+    legend.position = "none",
+    panel.border = element_blank(),
+    panel.grid.major.x = element_blank(),
+    panel.grid.minor.x = element_blank(),
+    axis.text.x = element_text(angle = 90, size = 12, vjust = 0.5)
+  )+
+  # Add highlighted points
+  geom_point(data=subset(dd, env=="TRUE"), color="darkred", alpha=0.75, size=3) +
+  
+  # Add label using ggrepel to avoid overlapping
+  geom_label_repel( data=subset(dd, env =="TRUE"), aes(label=id),size=4)
+
+
+pdf("./alignment/ersn.bwa.danRer11.envol.manhattan.RDA1.pdf", width = 12, height=8)
+manhplot
+dev.off()
+
+write.table(dd,"./alignment/ersn.bwa.danRer11.aln.summary.txt",quote=F, row.names = F)
+
+
+###zoom in to certain chromosomes###
+head(dd)
+
+chr9 <- dd %>% 
+  filter(chr==9)
+head(chr9)
+summary(chr9)
+
+chr9_p<- ggplot(chr9, aes(x = pos/1e6, y = RDA1^2, 
+                           size=RDA1^2)) +
+  geom_point(color="orange",alpha = 0.75) +
+  #geom_hline(yintercept = -log10(sig), color = "grey40", linetype = "dashed") + #add reference line
+  #scale_x_continuous(label = axis.set$chr, breaks = axis.set$center) +
+  scale_x_continuous(breaks=seq(0,55, by=5))+
+  scale_y_continuous(expand = c(0,0), limits=c(0, ylim)) +
+  #scale_color_manual(values = rep(c("#276FBF", "#183059"), nCHR)) +
+  #scale_color_manual(values = rep(c("darkgrey", "orange"), nCHR)) +
+  scale_size_continuous(range = c(1,3)) +
+  labs(x = "Position on Chr9 (Mbp)", 
+       y = "squared RDA1 loading") + 
+  theme_minimal(base_size = 15) +
+  theme( 
+    legend.position = "none",
+    panel.border = element_blank(),
+    panel.grid.major.x = element_blank(),
+    panel.grid.minor.x = element_blank(),
+    #axis.text.x = element_text(size = 12, vjust = 0.5)
+  )+
+  # Add highlighted points
+  geom_point(data=subset(chr9, env=="TRUE"), color="darkred", alpha=0.75, size=3) +
+  
+  # Add label using ggrepel to avoid overlapping
+  geom_label_repel( data=subset(chr9, fst =="TRUE"), aes(label=id), color="orange",size=4)
+
+
+pdf("./alignment/ersn.bwa.danRer11.envol.manhattan.chr9.RDA1.pdf", width = 12, height=8)
+chr9_p
+dev.off()
+
+####extract inversion loci###
+inv <- dd %>% 
+  filter(chr==9) %>% 
+  filter(env=="TRUE") %>% 
+  select(tag, tag.pos)
+
+write.table(inv, "./SV/ersn.inversion.loci.list", quote=F, row.names = F, col.names = F)

@@ -1,0 +1,248 @@
+library(tidyverse)
+library(ggrepel)
+
+rm(list=ls())
+#data for HMM states, 1 for low, 2 for intermediate, 3 for high
+state <- read.table("./HMM/bhmw.bwa.danRer11.aln.Fstp.4pops_3state_HMMstates.txt",header=T)
+#alignment information
+aln.stat <- read.table("./alignment/bhmw.bwa.danRer11.aln.stat.4pops.txt",header=T)
+#list of adaptive loci
+envol <- read.table("./outliers_summary/bhmw.envol.candidates.list", header=T)
+gFst=0.0382 #global Fst
+
+##note: for freshwater drum: state 1 is the high differentiation state
+##note: for bhmw.4pops: state 1 is the high differentiation state; 
+
+
+aln.stat <- cbind(aln.stat, state)
+##make state as factor
+aln.stat$x <- as.factor(aln.stat$x)
+levels(aln.stat$x)
+
+
+##identify islands of differentiation as state=3 & contains at least ONE fst.ol
+aln.stat <- aln.stat %>% 
+  rownames_to_column("pos.index") %>% 
+  mutate(fst.ol=rowSums(select(.,bs:pcadapt))) %>% 
+  mutate(env=tag %in% envol$chrom) %>% 
+  #mutate(sig.state=ifelse(x==3 & fst.ol > 0,"high","non-high")) %>% 
+  mutate(sig.state=ifelse(x==1 & fst.ol > 0,"high","non-high")) %>% 
+  mutate(id=paste0(tag,"_", tag.pos))
+
+
+aln.stat$pos.index=as.numeric(aln.stat$pos.index)
+
+#create a column called "window" based on change of states
+aln.stat$win <- cumsum(c(1,as.numeric(diff(aln.stat$x))!=0))
+
+#generate info for windows
+aln.stat <- aln.stat %>% 
+  mutate(chr.mbp=chr.cumpos/1e6) %>% 
+  group_by(win) %>% 
+  mutate(win.size=n()) %>% 
+  mutate(win.start=first(chr.mbp)) %>% 
+  mutate(win.end=last(chr.mbp))
+
+#order chr
+aln.stat$chr <- as.factor(aln.stat$chr)
+nCHR=length(unique(aln.stat$chr))
+levels(aln.stat$chr)
+aln.stat$chr <- factor(aln.stat$chr, levels=c(seq(1,nCHR-1,1),"Unplaced"))
+levels(aln.stat$chr)
+
+
+#######################
+##labeling parameters##
+#######################
+#calculate the difference between the maximum and minimum cumulative base pair 
+#position for each chromosome and divide it by two to get the mialn.statle of each chromosome.
+
+axis.set <- aln.stat %>% 
+  group_by(chr) %>% 
+  summarize(center = (max(chr.mbp) + min(chr.mbp)) / 2)
+
+ylim=max(aln.stat$Fstp)+0.1 # have some space on the y axis
+##replace nagative Fst value to a very small value close to 0 for plotting reasons
+aln.stat <- aln.stat %>% 
+  mutate(Fst_plot=if_else(Fstp<0, 0.001, Fstp))
+range(aln.stat$Fst_plot)
+
+
+####################
+###manhattan plot###
+####################
+#plot it
+#each point is one snp;
+#snp color based on chromosome;
+#chr.mbp as x axis
+#aln.stat labels and y limit
+#keep horizontal grid lines, remove vertical grid lines;
+
+p <- ggplot(aln.stat, aes(x = chr.mbp, y = Fst_plot, 
+                           color = chr)) +
+  geom_point(size=2) +
+  #add reference line for global Fst
+  geom_hline(yintercept = gFst, color = "red", linetype = "dashed") + 
+  scale_x_continuous(label = axis.set$chr, breaks = axis.set$center) +
+  scale_y_continuous(expand = c(0,0), limits=c(0, ylim)) +
+  scale_color_manual(values = rep(c("dimgray","darkgrey"), nCHR)) +
+  scale_size_continuous(range = c(1,4)) +
+  labs(x = NULL, 
+       y = "Fst") + 
+  theme_minimal(base_size = 15) +
+  theme( 
+    legend.position = "none",
+    panel.border = element_rect(colour="black",fill=NA, size=1),
+    panel.grid.major.x = element_blank(),
+    panel.grid.minor.x = element_blank(),
+    axis.text.x = element_text(angle = 90, size = 12, vjust = 0.5)
+  )+
+
+  #add points for genomic islands of high differentiation
+  geom_point(data=subset(aln.stat, sig.state=="high"), aes(x=(win.start+win.end)/2, y=ylim-0.01, size=win.end - win.start), col="navyblue", alpha=0.5)+
+  # Add highlighted points for adaptive loci
+  geom_point(data=subset(aln.stat, env=="TRUE"), pch=21, fill="orange", color="black", alpha=0.8, size=3.5)+
+  # Add highlighted points for significnat island SNPs
+  geom_point(data=subset(aln.stat, sig.state=="high"), color="tomato", alpha=0.8, size=3)+
+  # Add label using ggrepel to avoid overlapping for adaptive loci
+  geom_label_repel( data=subset(aln.stat, env =="TRUE"), aes(label=id), color="orange",size=4)
+ 
+  
+
+pdf("./HMM/bhmw.aln.env.hmm.islands.4pops.pdf", width = 12, height=8)
+p
+dev.off()
+
+
+#######################################
+###Sig Island SNPs excluding PCAdapt###
+#######################################
+#PCAdapt seems have a lot of false positive
+
+aln.stat <- aln.stat %>% 
+  ungroup() %>% 
+  mutate(fst.ol2=rowSums(select(.,bs:ofk))) %>% 
+  #mutate(sig.state2=ifelse(x==3 & fst.ol2 > 0,"high", "non-high")) 
+  mutate(sig.state2=ifelse(x==1 & fst.ol2 > 0,"high", "non-high")) 
+
+
+
+p2 <- ggplot(aln.stat, aes(x = chr.mbp, y = Fst_plot, 
+                          color = chr)) +
+  geom_point(size=2) +
+  #add reference line for global Fst
+  geom_hline(yintercept = gFst, color = "red", linetype = "dashed") + 
+  scale_x_continuous(label = axis.set$chr, breaks = axis.set$center) +
+  scale_y_continuous(expand = c(0,0), limits=c(0, ylim)) +
+  scale_color_manual(values = rep(c("dimgray","darkgrey"), nCHR)) +
+  scale_size_continuous(range = c(1,4)) +
+  labs(x = NULL, 
+       y = "Fst") + 
+  theme_minimal(base_size = 15) +
+  theme( 
+    legend.position = "none",
+    panel.border = element_rect(colour="black",fill=NA, size=1),
+    panel.grid.major.x = element_blank(),
+    panel.grid.minor.x = element_blank(),
+    axis.text.x = element_text(angle = 90, size = 12, vjust = 0.5)
+  )+
+  
+  #add points for genomic islands of high differentiation
+  geom_point(data=subset(aln.stat, sig.state2=="high"), aes(x=(win.start+win.end)/2, y=ylim-0.01, size=win.end - win.start), col="navyblue", alpha=0.5)+
+
+  # Add highlighted points for adaptive loci
+  geom_point(data=subset(aln.stat, env=="TRUE"), pch=21, fill="orange", color="black", alpha=0.8, size=3.5)+
+  # Add highlighted points for significnat island SNPs
+  geom_point(data=subset(aln.stat, sig.state2=="high"), color="tomato", alpha=0.8, size=3)+
+  # Add label using ggrepel to avoid overlapping for adaptive loci
+  geom_label_repel( data=subset(aln.stat, env =="TRUE"), aes(label=id), color="orange",size=4)
+
+pdf("./HMM/bhmw.aln.env.hmm.islands.nopcadapt.4pops.pdf", width = 12, height=8)
+p2
+dev.off()
+
+################################################################################
+###Sig islands as the one contain outlier loci IDed by at least 2 Fst methods###
+################################################################################
+
+
+aln.stat <- aln.stat %>% 
+  ungroup() %>% 
+  #mutate(sig.state3=ifelse(x==3 & fst.ol > 1,"high", "non-high")) 
+  mutate(sig.state3=ifelse(x==1 & fst.ol > 1,"high", "non-high")) 
+
+
+
+p3 <- ggplot(aln.stat, aes(x = chr.mbp, y = Fst_plot, 
+                           color = chr)) +
+  geom_point(size=2) +
+  #add reference line for global Fst
+  geom_hline(yintercept = gFst, color = "red", linetype = "dashed") + 
+  scale_x_continuous(label = axis.set$chr, breaks = axis.set$center) +
+  scale_y_continuous(expand = c(0,0), limits=c(0, ylim)) +
+  scale_color_manual(values = rep(c("dimgray","darkgrey"), nCHR)) +
+  scale_size_continuous(range = c(1,4)) +
+  labs(x = NULL, 
+       y = "Fst") + 
+  theme_minimal(base_size = 15) +
+  theme( 
+    legend.position = "none",
+    panel.border = element_rect(colour="black",fill=NA, size=1),
+    panel.grid.major.x = element_blank(),
+    panel.grid.minor.x = element_blank(),
+    axis.text.x = element_text(angle = 90, size = 12, vjust = 0.5)
+  )+
+  
+  #add points for genomic islands of high differentiation
+  geom_point(data=subset(aln.stat, sig.state3=="high"), aes(x=(win.start+win.end)/2, y=ylim-0.01, size=win.end - win.start), col="navyblue", alpha=0.5)+
+  
+  # Add highlighted points for adaptive loci
+  geom_point(data=subset(aln.stat, env=="TRUE"), pch=21, fill="orange", color="black", alpha=0.8, size=3.5)+
+  # Add highlighted points for significnat island SNPs
+  geom_point(data=subset(aln.stat, sig.state3=="high"), color="tomato", alpha=0.8, size=3)+
+  # Add label using ggrepel to avoid overlapping for adaptive loci
+  geom_label_repel( data=subset(aln.stat, env =="TRUE"), aes(label=id), color="orange",size=4)
+
+pdf("./HMM/bhmw.aln.env.hmm.islands.2fst.4pops.pdf", width = 12, height=8)
+p3
+dev.off()
+
+write.table(aln.stat, "./HMM/bhmw.aln.hmm.islands.4pops.txt",quote=F, row.names = F)
+
+
+
+##################
+###island stats###
+##################
+# number of islands
+aln.stat %>% 
+  filter(sig.state3=="high") %>% 
+  distinct(win)
+
+# win stats
+aln.stat %>% 
+  filter(sig.state3=="high") %>% 
+  dplyr::select(win, win.size, fst.ol, fst.ol2, bs:pcadapt, x, id, tag, tag.pos,win.start, win.end) %>% 
+  mutate(win.size.mbp=win.end-win.start) %>% 
+  summary()
+
+
+aln.stat %>% 
+  filter(sig.state3=="high") %>% 
+  dplyr::select(win, win.size, fst.ol, fst.ol2, bs:pcadapt, x, sig.state, sig.state2, sig.state3, id, tag, tag.pos,win.start, win.end) %>% 
+  mutate(win.size.mbp=win.end-win.start) %>% 
+  view()
+
+# extract SNPs in the island windows
+
+win.target <- aln.stat %>% 
+  filter(sig.state3=="high") %>% 
+  distinct(win) %>% 
+  pull(win)
+
+l <- aln.stat %>% 
+  filter(win %in% win.target) %>% 
+  dplyr::select(win, win.size, fst.ol, fst.ol2, x, id, tag, tag.pos, chr, chr.pos)
+
+write.table(l, "./HMM/bhmw.aln.hmm.island.loci.nopcadapt.list",quote=F, row.names=F)  
+

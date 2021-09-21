@@ -1,0 +1,29 @@
+rm(list=ls())
+###LD plot
+aln <- read.table("./alignment/ersn.bwa.danRer11.uni.mapq20.aln.txt",header=T)
+loc <- read.table("chrom_pos_rowID/ersn.chrom.pos.rowID.list",header=F)
+colnames(loc) <- c("id","chrom","pos")
+aln.loc <- left_join(aln,loc,by=c("snp"="chrom")) %>% 
+  dplyr::select(id, tag=snp, tag.pos=pos.y, ref.chr=chr, ref.pos=pos.x, accession=reference, mapq)
+
+#get LD values
+c=6
+ld <- read.table("./LD/ersn/ersn.chr6.ld",header=T)
+#hom2 <- read.table("./LD/ersn/ersn.chr6.homo2.ld",header=T)
+hom0 <- read.table("./LD/ersn/ersn.chr6.homo0.ld",header=T)
+
+
+#LD plot
+source("ld_heatmap.r")
+ld.p <- ld_heatmap(aln.loc,ld,c)
+#hom2.p <- ld_heatmap(aln.loc,hom2,c)
+hom0.p <- ld_heatmap(aln.loc,hom0,c)
+
+
+
+pdf("./Figures/Fig4_chr6_LD.pdf", width = 12, height=6)
+ggarrange(ld.p, hom0.p,
+          labels=c("D", "E"),
+          font.label = list(size=20, face="plain"),
+          vjust=3)
+dev.off()

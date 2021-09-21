@@ -1,0 +1,68 @@
+library(tidyverse)
+library(gridExtra)
+rm(list=ls())
+
+###Get loci aligned to specific chromosomes###
+aln <- read.table("./alignment/cncf.bwa.IpCoco.uni.mapq20.aln.txt",header=T)
+loc <- read.table("chrom_pos_rowID/cncf.chrom.pos.rowID.list",header=F)
+colnames(loc) <- c("id","chrom","pos")
+
+aln.loc <- left_join(aln,loc,by=c("snp"="chrom")) %>% 
+  dplyr::select(id, tag=snp, tag.pos=pos.y, ref.chr=chr, ref.pos=pos.x, accession=reference, mapq)
+
+table(aln.loc$ref.chr)
+
+################
+###get LD(r2)###
+################
+
+source("ld_heatmap.r")
+#ld_heatmap <- function(aln.loc,ld,c)
+
+##chr14 in cncf
+##chr14 in cncf, homo2 is the most common homo.
+
+ld <- read.table("./LD/cncf/cncf.chr14.ld",header=T)
+hom2 <- read.table("./LD/cncf/cncf.chr14.homo2.ld",header=T)
+hom0 <- read.table("./LD/cncf/cncf.chr14.homo0.ld",header=T)
+het1 <- read.table("./LD/cncf/cncf.chr14.het1.ld",header=T)
+
+ld.p <- ld_heatmap(aln.loc,ld,14)
+hom2.p <- ld_heatmap(aln.loc,hom2,14)
+hom0.p <- ld_heatmap(aln.loc,hom0,14)
+het1.p <- ld_heatmap(aln.loc,het1,14)
+p.cncf <- grid.arrange(arrangeGrob(ld.p, top="All individuals"), arrangeGrob(hom2.p, top="Common homozygotes"), nrow=1)
+p.cncf
+pdf("./LD/cncf/cncf.chr14.ld_compare.pdf", width = 12, height=6)
+grid.arrange(ld.p, hom2.p, nrow=1)
+dev.off()
+
+##chr6 in ersn
+##chr6 in ersn, homo0 is the most common homo.
+
+###Get loci aligned to specific chromosomes###
+aln <- read.table("./alignment/ersn.bwa.danRer11.uni.mapq20.aln.txt",header=T)
+loc <- read.table("chrom_pos_rowID/ersn.chrom.pos.rowID.list",header=F)
+colnames(loc) <- c("id","chrom","pos")
+
+aln.loc <- left_join(aln,loc,by=c("snp"="chrom")) %>% 
+  dplyr::select(id, tag=snp, tag.pos=pos.y, ref.chr=chr, ref.pos=pos.x, accession=reference, mapq)
+
+table(aln.loc$ref.chr)
+ld <- read.table("./LD/ersn/ersn.chr6.ld",header=T)
+hom2 <- read.table("./LD/ersn/ersn.chr6.homo2.ld",header=T)
+hom0 <- read.table("./LD/ersn/ersn.chr6.homo0.ld",header=T)
+het1 <- read.table("./LD/ersn/ersn.chr6.het1.ld",header=T)
+
+ld.p <- ld_heatmap(aln.loc,ld,6)
+hom2.p <- ld_heatmap(aln.loc,hom2,6)
+hom0.p <- ld_heatmap(aln.loc,hom0,6)
+het1.p <- ld_heatmap(aln.loc,het1,6)
+p.ersn <- grid.arrange(ld.p, hom0.p, nrow=1)
+p.ersn
+
+
+
+
+
+

@@ -1,0 +1,17 @@
+library(tidyverse)
+
+rm(list=ls())
+aln <- read.table("./HMM/HMM_final/bhmw.aln.hmm.islands.stats.txt", header=T)
+wl.target <- read.table("./HMM/HMM_final/bhmw.aln.hmm.islands.target.list",header=T)
+c=2
+
+#Info about target island
+win.target.c <- aln %>% 
+  filter(chr==c) %>% 
+  filter(win %in% wl.target$x) %>% 
+  dplyr::select(id, tag, tag.pos, chr, chr.pos)
+
+
+write.table(win.target.c, "./annotation/lociInterest/bhmw_chr2_island.loci.list", row.names = F, quote=F)
+
+head(wl)

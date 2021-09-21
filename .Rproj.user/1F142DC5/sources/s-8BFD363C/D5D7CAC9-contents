@@ -1,0 +1,37 @@
+library(tidyverse)
+
+########################################
+###Arlequin Loci under selection test###
+########################################
+
+#Perform correction for multiple testing on Arlequin outlier (FDIST2) results   
+
+rm(list=ls())
+arl.data<-read.table("./arlequin_output/gzsd.fdist2_ObsOut.txt", skip=1)
+head(arl.data)
+colnames(arl.data) <- c("locus","Hobs","Fst","pval","quantile")
+
+summary(arl.data) #some pval =2
+
+arl.data$pval[arl.data$pval>1] <- 1 #convert p=2 to p=1
+
+pdf("./arlequin_output/gzsd.arlequin.pdf")
+hist(arl.data$pval)
+plot(arl.data$Hobs, arl.data$Fst)
+dev.off()
+
+arl.q<-qvalue(p=arl.data$pval, pi0=1, fdr.level=0.05)
+
+arl.data.qval<-cbind(arl.data,BHqval=arl.q$qvalues,sig=arl.q$significant)
+
+arl.ol <- arl.data.qval %>% 
+  filter(BHqval<0.05) %>% 
+  mutate(locus= paste0("SNP_", locus)) %>% 
+  select(locus) %>% 
+  pull(locus)
+
+length(arl.ol)
+arl.data.qval %>% 
+  filter(sig=="TRUE") %>% 
+  dim()
+write.table(arl.ol, "arlequin_output/gzsd.arlequin.outliers.txt", quote=F, row.names=F)

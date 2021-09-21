@@ -1,0 +1,18 @@
+##############
+###Bayescan###
+##############
+rm(list=ls())
+source("plot_R.r") #calling plot_R.r from Bayescan.
+pdf("bayescan_output/po1000/gzsd.bayescan.pdf")
+bsc <- plot_bayescan("bayescan_output/po1000/gzsd.noclone.baye_fst.txt", FDR=0.05)
+dev.off()
+bsc.d <- read.table("./bayescan_output/po1000/gzsd.noclone.baye_fst.txt", header=T)
+bsc.d %>% 
+  filter(qval<0.05) %>% 
+  dim()
+
+bsc_ol <- bsc$outliers
+bsc_ol <- paste0("SNP_",bsc_ol)
+length(bsc_ol)
+
+write.table(bsc_ol, "bayescan_output/po1000/gzsd_bayescan_outliers.txt", quote=F, row.names=F)

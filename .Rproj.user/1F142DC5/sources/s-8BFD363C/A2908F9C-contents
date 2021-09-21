@@ -1,0 +1,96 @@
+rm(list=ls())
+library(psych) #pairs.panels
+library(usdm) #VIF
+library(ggbiplot)
+library(tidyverse)
+library(RColorBrewer)
+library(stats)
+library(factoextra)
+
+
+#####################
+##reduced env data###
+#####################
+pop.env2 <- read.csv("missR_env_bypop_reduced.csv",header=TRUE)
+rownames(pop.env2) <- pop.env2$X
+pop.env2 <- pop.env2[,-1]
+
+head(pop.env2)
+
+pca.r <- prcomp(pop.env2, scale=TRUE, center=TRUE)
+summary(pca.r)
+unclass(pca.r)
+
+#see how many PCs to retain
+plot(pca.r, type="l")
+
+ev <- pca.r$sdev^2
+ev
+
+
+#Kaiser-Guttman criterion and broken stick;
+evplot = function(ev) {
+  # Broken stick model (MacArthur 1957)
+  n = length(ev)
+  bsm = data.frame(j=seq(1:n), p=0)
+  bsm$p[1] = 1/n
+  for (i in 2:n) bsm$p[i] = bsm$p[i-1] + (1/(n + 1 - i))
+  bsm$p = 100*bsm$p/n
+  # Plot eigenvalues and % of variation for each axis
+  op = par(mfrow=c(2,1),omi=c(0.1,0.3,0.1,0.1), mar=c(1, 1, 1, 1))
+  barplot(ev, main="Eigenvalues", col="bisque", las=2)
+  abline(h=mean(ev), col="red")
+  legend("topright", "Average eigenvalue", lwd=1, col=2, bty="n")
+  barplot(t(cbind(100*ev/sum(ev), bsm$p[n:1])), beside=TRUE, 
+          main="% variation", col=c("bisque",2), las=2)
+  legend("topright", c("% eigenvalue", "Broken stick model"), 
+         pch=15, col=c("bisque",2), bty="n")
+  par(op)
+}
+
+
+
+pdf("missR_env_pca_reduced.pdf")
+
+
+evplot(ev)
+
+fviz_pca_biplot(pca.r,  #This reference line corresponds to the expected value if the contribution where uniform.
+                axes=c(1,2),
+                repel=TRUE,
+                col.var = "black", # Variables color
+                col.ind = "red")+ # Individuals color
+  labs(title="")
+
+
+fviz_cos2(pca.r, choice="ind",axes=1)
+fviz_cos2(pca.r, choice="ind",axes=2)
+
+fviz_contrib(pca.r, choice = "var",axes=1)+coord_flip()
+fviz_contrib(pca.r, choice = "var",axes=2)+coord_flip()
+
+dev.off()
+
+
+
+pca.r$x[,1:2]
+plot(pca.r$x[,1])
+plot(pca.r$x[,2])
+write.table(pca.r$x[,1:2], "missR_env_PC12.txt", quote=F, row.names = T)
+
+
+pca.r$x[,1:2]
+
+
+envpc_sd <- scale(pca.r$x[,1:2], center=TRUE, scale=TRUE)
+
+####transpose##
+env_t <-setNames(data.frame(t(envpc_sd)), rownames(pca.r$x)) #each row is one variable, each column is one pop
+env_t
+
+write.table(env_t, "missR_pc12_bayenv.txt", sep="\t", quote=F, row.names = F)
+write.table(rownames(env_t), "missR_pc12_bayenv.names", quote=F, row.names=F)
+
+
+
+
