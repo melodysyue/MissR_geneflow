@@ -14,14 +14,14 @@ Input and intermediate data for various analyses for the six study species. We u
   - **gzsd** -> Gizzard Shad
   - **ersn** -> Emerald Shiner
 
-`./data/popmap/`: popmap filter (after filtering) for each species.
+`./data/popmap/`: popmap (after filtering) for each species.
 
 `./data/env/`: 
-  - `*missR_env_bypop_reduced.csv*`: standardized environmental data (subtract the mean and then devided by the standard deviation of the variable across populations via R `scale()` function, `center=TRUE, scale=TRUE`).
+  - `missR_env_bypop_reduced.csv`: standardized environmental data (subtract the mean and then devided by the standard deviation of the variable across populations via R `scale()` function, `center=TRUE, scale=TRUE`).
   
 `./data/rowID_tag_tagpos/`: list of genotyped SNPs with row index, tag, and tag position. 
 
-`./data/outlier_neutral/`: lists of outlier SNPs and neutral SNPs with tag ($chrom) and tag position ($pos).
+`./data/outlier_neutral/`: list of outlier SNPs and neutral SNPs with tag ($chrom) and tag position ($pos).
   - `*fstol.list`: *F<sub>ST</sub>* outliers.
   - `*geaol.list`: GEA outliers.
   - `*fst_gea_ol.list`: outlier SNPs (union of *F<sub>ST</sub>* outliers and GEA outliers).
@@ -30,14 +30,14 @@ Input and intermediate data for various analyses for the six study species. We u
   - `*outlier_summary.txt`: identified outliers using each of the 7 methods, including Bayescan (bs), Arlequin (arl), OutFLANK (ofk), pcadapt, RDA(rda), LFMM2(lfmm), and Bayenv2 (bf).  
 
 `./data/alignment/`: 
-  - `*.bwa.uni.map20.aln.txt`: list of aligned SNPs (after filtering) for each species.
+  - `*bwa.uni.map20.aln.txt`: list of aligned SNPs (after filtering) for each species.
   - `*bwa.aln.stats.txt`: chromosomal position, Fstp, Ho, maf for each aligned SNP (after filtering) for each species.
   - `*aln.hmm.islands.stats.txt`: alignment info plus HMM islands info.
 
 `./data/hmm_inversions/`: 
  - `*aln.Fstp_3states_HMMstates.txt`: HMM states for each aligned SNP.
-- `*aln.fstp.txt`: Fstp value for each aligned SNP. 
- - `ersn.danRer11.ws20.*.ol.txt`: list of SNPs within putative inversions.
+ - `*aln.fstp.txt`: Fstp value for each aligned SNP. 
+ - `ersn.danRer11.ws20.*.ol.txt`: list of SNPs within each putative inversion.
  - `ersn.danRer11.ws20.*.ol.cluster.genotype.txt`: cluster membership (0, 1, 2) of individuals for each putative inversion. 
  - `ersn.chr*.inv.recode.vcf`: vcf file for each putative inversion.
  
@@ -55,9 +55,9 @@ Input and intermediate data for various analyses for the six study species. We u
 
 **Note**:
 
-Demultiplexed RAD sequencing data used in this study were archived in the NCBI with BioProject ID PRJNA674918.
+Demultiplexed RAD sequencing data used in this study are archived in the NCBI with BioProject ID PRJNA674918.
 
-vcf files (post filtering) and genepop files (neutral SNPs after thinning) can be found on Dryad.
+vcf files (all SNPs post filtering) and genepop files (neutral SNPs after thinning) can be found on Dryad.
 
 # Scripts
 
@@ -78,11 +78,11 @@ All analyses were performed in parallel within each species and the results were
  
  
 `./scripts/2_envVars_outlier_neutral/`:
- - 20_fig1C_figS1A_figS1B.r: Figure 1C and Figure S1A & S1B.
+ - 20_fig1C_figS1A_figS1B.r: Figure 1C and Figure S1.
  - 21_rda.r
- - 22_outlier_summary.r: Table S4.
+ - 22_outlier_summary.r: Table S5.
  - 23_neutral_thinning.r
- - 24_neutral_pwfst.r: Table S5.
+ - 24_neutral_pwfst.r: Table S6.
  - 25_neutral_PCA.r: Figure 3.
  
  
@@ -98,8 +98,8 @@ All analyses were performed in parallel within each species and the results were
  - 38_fig2.r: Figure 2. 
  
 `./scripts/4_cluster/`:
- - 40_NND_permutation.r: Table S7.
- - 41_fst_ho_dxy_ld_permutation.r: Table S7. 
+ - 40_NND_permutation.r: Table S8.
+ - 41_fst_ho_dxy_ld_permutation.r: Table S8. 
  - 42_fig6.r: Figure 6. 
   
 `./scripts/permutation_functions/`: shared functions to conduct permutation tests. 
