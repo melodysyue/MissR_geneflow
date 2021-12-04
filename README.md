@@ -101,6 +101,7 @@ All analyses were performed in parallel within each species and the results were
  - 40_NND_permutation.r: Table S8.
  - 41_fst_ho_dxy_ld_permutation.r: Table S8. 
  - 42_fig6.r: Figure 6. 
+ - 43_figs7.r: Figure S7.
   
 `./scripts/permutation_functions/`: shared functions to conduct permutation tests. 
   
