@@ -1,0 +1,114 @@
+library(tidyverse)
+library(gghighlight)
+library(evobiR)
+
+rm(list=ls())
+
+#loci id and fst
+
+#comparison
+list <- list.files(path="./hmm/input", pattern=".fst", full.names = TRUE) %>% 
+  sort() %>% 
+  basename() %>% 
+  str_remove_all(., '.fst')
+
+#loci info
+df <- read.table("./selection_peaks/fst_all_Pairs_edited.txt", header=T)
+
+
+#Separate by specific pop pairs;
+popmap <- read.table("./popmaps/lwf.N829.popmap.edited", header=F)
+colnames(popmap) <- c("sample", "pop")
+pops <- as.character(unique(popmap$pop))
+
+
+chr <- seq(1,40,1)
+
+
+#sliding window with a window size of 50 SNPs and a step of 10 SNPs;
+#significant windows are those with at least 10 outlier SNPs; 
+
+window=50
+step=5
+cutoff=10
+
+
+result.pop <- NULL
+
+for (pop in pops) {
+  print(pop)
+
+  list_target <- list[str_detect(list,pop)]
+  
+  df_mean <- df %>% 
+    select(snp.id, chromosome, position, list_target) %>% 
+    mutate(meanFst=rowMeans(select(., list_target))) %>% 
+    select(snp.id, chromosome, position, meanFst) 
+  
+  
+  ol <- as.numeric(quantile(df_mean$meanFst, probs=0.999, na.rm=TRUE))
+  
+  
+  result <- NULL
+  
+  for (c in chr){
+    
+    df_mean_chr <- df_mean %>%
+      filter(chromosome == c)
+    
+    total <- nrow(df_mean_chr)
+    spots <- seq(from = 1, to = (total - window + 1), by = step)
+    
+    for(i in 1:length(spots)){
+      
+        start <- df_mean_chr[spots[i], "position"]
+        end <- df_mean_chr[spots[i]+window-1, "position"]
+        w.ol <- df_mean_chr[spots[i]:(spots[i] + window - 1),] %>% 
+          filter(meanFst>=ol) 
+        
+        temp <- c(index=i, chromosome=c, start=start, end=end, ol=nrow(w.ol))
+        
+        result <- rbind(result, temp) %>% 
+          as.data.frame()
+    }
+    
+}
+ 
+  result <- result %>% 
+    filter(ol >= 10) %>% 
+    mutate(pop=pop)
+  
+  result.pop <- rbind(result.pop, result)
+    
+    
+}
+
+write.table(result.pop, "./selection_peaks/sigWindows_w50_step5_ol10.txt", quote=F, row.names = F)
+
+
+##combine consecutive windows into regions
+result.pop.s <- result.pop %>% 
+  select(index, chromosome, start, end) %>% 
+  unique() %>% 
+  arrange(chromosome, index)
+
+y=result.pop.s$index
+g <- cumsum(c(1, abs(y[-length(y)] - y[-1]) > 1)) #whether each neighboring pair is dissimilar or not with 1 as initial value.
+
+result.pop.s$region <- g
+
+
+result.pop.region <- result.pop.s %>% 
+  mutate(region=g) %>% 
+  group_by(region) %>% 
+  mutate(region_start=min(start), region_end=max(end)) %>% 
+  mutate(region_size=region_end-region_start) %>% 
+  select(chromosome, region, region_start, region_end, region_size) %>% 
+  unique()
+  
+write.table(result.pop.region, "selection_peaks/sigRegions.txt", quote=F, row.names = F)
+
+
+  
+
+

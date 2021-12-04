@@ -1,4 +1,0 @@
-rm(list=ls())
-
-
-d <- read.table("./data/outlier_neutral/ersn.neutral.list", header=T)

@@ -98,9 +98,11 @@ heat_p <- pheatmap(heatmap2_sorted,
                    cluster_cols = FALSE,
                    show_colnames = TRUE,
                    show_rownames = FALSE,
+                   color=c("snow", "lightblue","steelblue", "darkblue"),
                    legend_breaks = c(-1,0,1,2),
                    legend_labels =c("NA","homo1","het","homo2")
 )
+
 
 
 pdf("./FigS6_ersn_chr9_ivt_genotype_heatmap.pdf", width=18, height = 6 )
