@@ -1,7 +1,7 @@
 # MissR_geneflow
  
 # How to cite:
-Yue Shi, Kristen L. Bouska, Garrett J. McKinney, William Dokai, Andrew Bartels, Megan V. McPhee, Wesley A. Larson. Gene flow influences the genomic architecture of local adaptation in six riverine fish species. *Molecular Ecology* (2021). [https://www.biorxiv.org/content/10.1101/2021.05.18.444736v1](https://www.biorxiv.org/content/10.1101/2021.05.18.444736v1) (It just got accepted on Dec 1st, 2021. Link will be available soon!)
+Yue Shi, Kristen L. Bouska, Garrett J. McKinney, William Dokai, Andrew Bartels, Megan V. McPhee, Wesley A. Larson. Gene flow influences the genomic architecture of local adaptation in six riverine fish species. *Molecular Ecology* (2021). https://doi.org/10.1111/mec.16317
 
 # Data
 
